@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+
+<html>
+  <head>
+    <title>Ma page</title>
+    <link rel="stylesheet" href="{% static 'appIOT/data.css' %}">
+  </head>
+
+<body>
+<nav>
+        <div class="logo">
+            <a href="/"></a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{% url 'graphique' %}">Statistiques</a></li>
+            <li><a href="/api/temperature-humidity/">API</a></li>
+            <li><a href="/sensor-data/">Table</a></li>
+            <li> <a href="{% url 'download_csv' %}">Télécharger CSV</a></li>
+
+        </ul>
+    </nav>
+<div class="container">
+    <h1>Graphique</h1>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <canvas id="graphique-temp" height="300"   ></canvas>
+        </div>
+        <div class="col-md-6">
+            <canvas id="graphique-hum"  height="300" ></canvas>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js"></script>
+<script>
+    fetch('/chart-data/')
+        .then(response => response.json())
+        .then(data => {
+            const lastFifteenTemps = data.temps.slice(-15);
+            const lastFifteenTemperature = data.temperature.slice(-15);
+
+            const formattedDates = lastFifteenTemps.map(timestamp => {
+                const date = new Date(timestamp);
+                return `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+            });
+
+            var ctx = document.getElementById('graphique-temp').getContext('2d');
+            var myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: formattedDates,
+                    datasets: [{
+                        label: 'La valeur de Température',
+                        data: lastFifteenTemperature,
+                        backgroundColor: lastFifteenTemperature.map(temp => temp >= 38 ? 'rgba(255, 99, 132, 0.2)' : 'rgba(54, 162, 235, 0.2)'),
+                        borderColor: lastFifteenTemperature.map(temp => temp >= 38 ? 'rgba(255, 99, 132, 1)' : 'rgba(54, 162, 235, 1)'),
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+        });
+
+    fetch('/chart-data/')
+        .then(response => response.json())
+        .then(data => {
+            const lastFifteenTemps = data.temps.slice(-15);
+            const lastFifteenHumidity = data.humidity.slice(-15);
+
+            const formattedDates = lastFifteenTemps.map(timestamp => {
+                const date = new Date(timestamp);
+                return `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()} ${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+            });
+
+            var ctx = document.getElementById('graphique-hum').getContext('2d');
+            var myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: formattedDates,
+                    datasets: [{
+                        label: 'La valeur de Humidité',
+                        data: lastFifteenHumidity,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 3
+                    }]
+                },
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    }
+                }
+            });
+        });
+</script>
+
+</body></html>
+
+{% endblock %}
