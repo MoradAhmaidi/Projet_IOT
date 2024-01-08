@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-10 col-xl-8">
+      <h2 class="h3 mb-4 page-title">Create User</h2>
+      <div class="my-4">
+        <form method="POST" action="{% url 'useradd' %}">
+          {% csrf_token %}
+          <hr class="my-4">
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="firstname">Firstname</label>
+              <input type="text" id="firstname" name="firstname" class="form-control" placeholder="firstname" required>
+            </div>
+            <div class="form-group col-md-6">
+              <label for="lastname">Lastname</label>
+              <input type="text" id="lastname" name="lastname" class="form-control" placeholder="lastname" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="custom-select">Select Role</label>
+            <select class="custom-select" id="custom-select" name="group" required>
+              <option selected>select menu</option>
+              {% for group in groupes %}
+              <option value="{{group.name}}">{{group.name}}</option>
+              {%endfor%}
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="inputEmail">Email</label>
+            <input type="email" name="email" class="form-control" id="inputEmail" placeholder="exemple@email.me" required>
+          </div>
+          <div class="form-group">
+            <label for="inputUsername">Username</label>
+            <input type="email" name="username" class="form-control" id="inputUsername" placeholder="user@name" required>
+          </div>
+          <hr class="my-4">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <div class="form-group">
+                <label for="inputPassword">Password</label>
+                <input type="password" name="password" class="form-control" id="inputPassword" required>
+              </div>
+              <div class="form-group">
+                <label for="inputPasswordConfirm">Confirm Password</label>
+                <input type="password" name="passwordConfirm" class="form-control" id="inputPasswordConfirm" required>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <p class="mb-2">Password requirements</p>
+              <p class="small text-muted mb-2"> To create a new password, you have to meet all of the following requirements: </p>
+              <ul class="small text-muted pl-4 mb-0">
+                <li> Minimum 8 character </li>
+                <li>At least one special character</li>
+                <li>At least one number</li>
+                <li>Can’t be the same as a previous password </li>
+              </ul>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Save Change</button>
+        </form>
+      </div> <!-- /.card-body -->
+    </div> <!-- /.col-12 -->
+  </div> <!-- .row -->
+</div> <!-- .container-fluid -->
+{% endblock %}

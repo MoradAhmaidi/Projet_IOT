@@ -1,155 +1,193 @@
-import csv
 import telepot
-from datetime import datetime
-
-from .models import Dht
-from django.utils import timezone
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.http import HttpResponse
 from twilio.rest import Client
+from django.contrib import messages
+from django.shortcuts import render,redirect
+from .models import Dht,TemplateMessage,Norms
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.models import User,Group,auth
+from django.contrib.auth.decorators import login_required
 
+# Authentification
+def login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = auth.authenticate(request,username=username,password=password)
+        if user is not None:
+            auth.login(request,user)
+            return redirect('/')
+        else:
+            messages.error(request,'invalid credentials')
+            return redirect('login')
+    else:
+        return render(request,'auth/login.html')
 
+#logout
+def logout(request):
+    auth.logout(request)
+    return redirect('login')
 
-#pour afficher home page
+#index
+@login_required()
 def home(request):
-    return HttpResponse('<h1>bonjour à tous</h1>')
+    data = Dht.objects.all()
+    lastData = Dht.objects.all().last()
+    template = {'Température maximale': Norms.MAX_TEMP, 'Température miminale': Norms.MIN_TEMP,
+                'Humidité maximale': Norms.MAX_HUM, 'Humidité miminale': Norms.MIN_HUM}
 
-#pour recupere data
-def dht(request):
-    tab = Dht.objects.all()
-    s = {'tab': tab}
-    return render(request, 'tables.html', s)
+    context = {'data': data, 'lastData': lastData,'template': template}
+    return render(request, 'index.html', context)
 
-#pour afficher les tables
-def table(request):
-    derniere_ligne = Dht.objects.last()
-    derniere_date = Dht.objects.last().dt
-    delta_temps = timezone.now()
-    difference_minutes = delta_temps.seconds // 60
-    temps_ecoule = ' il y a ' + str(difference_minutes) + ' min'
-    if difference_minutes> 60:
-        temps_ecoule = 'il y ' + str(difference_minutes // 60) + 'h' + str(difference_minutes % 60) + 'min'
-        valeurs = {'date': temps_ecoule, 'id': derniere_ligne.id, 'temp':
-        derniere_ligne.temp, 'hum': derniere_ligne.hum}
-    return render(request, 'value.html', {'valeurs': valeurs})
+@login_required()
+def userlist(request):
+    users = User.objects.all()
+    context = {'users': users}
+    return render(request,"user/user_list.html", context)
+@login_required()
+def useradd(request):
+    if request.method == 'POST':
 
-#pour tetecherge fichier csv
-def download_csv(request):
-    model_values = Dht.objects.all()
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="dht.csv"'
-    writer = csv.writer(response)
-    writer.writerow(['id', 'temp', 'hum', 'dt'])
-    liste = model_values.values_list('id', 'temp', 'hum','dt')
-    for row in liste:
-        writer.writerow(row)
-    return response
+        email = request.POST['email']
+        password = request.POST['password']
+        username = request.POST['username']
+        lastname = request.POST['lastname']
+        firstname = request.POST['firstname']
+        passwordConfirm = request.POST['passwordConfirm']
+        groupname = request.POST['group']
 
-#pour afficher les graphes
-def graphique(request):
-    return render(request, 'Chart.html')
-# récupérer toutes les valeur de température et humidity sous forme un #fichier json
-def chart_data(request):
-    dht = Dht.objects.all()
+        if User.objects.filter(email=email).exists():
+            messages.info(request, 'email taken')
+            return redirect('useradd')
+        elif User.objects.filter(username=username, password=password).exists():
+            messages.info(request, 'invalid username or password')
+            return redirect('useradd')
+        elif passwordConfirm != password:
+            messages.info(request, 'invalid password')
+            return redirect('useradd')
 
-    data = {
-        'temps': [Dt.dt for Dt in dht],
-        'temperature': [Temp.temp for Temp in dht],
-        'humidity': [Hum.hum for Hum in dht]
-    }
-    return JsonResponse(data)
+        user = User.objects.create_user(first_name=firstname, last_name=lastname, username=username, email=email,
+                                        password=password)
+        user.save();
 
-#pour récupérer les valeurs de température et humidité de dernier 24h
-# et envoie sous forme JSON
-def chart_data_jour(request):
-    dht = Dht.objects.all()
-    now = timezone.now()
+        user = User.objects.get(username=username)
+        group = Group.objects.get(name=groupname)
 
-    # Récupérer l'heure il y a 24 heures
-    last_24_hours = now - timezone.timedelta(hours=24)
+        user.groups.add(group)
 
-    # Récupérer tous les objets de Module créés au cours des 24 dernières heures
-    dht = Dht.objects.filter(dt__range=(last_24_hours, now))
-    data = {
-        'temps': [Dt.dt for Dt in dht],
-        'temperature': [Temp.temp for Temp in dht],
-        'humidity': [Hum.hum for Hum in dht]
-    }
-    return JsonResponse(data)
+        return redirect('userlist')
+    else:
+        groupes = Group.objects.all()
+        context = {'groupes': groupes}
+        return render(request, 'user/user_add.html', context)
 
-#pour récupérer les valeurs de température et humidité de dernier semaine
-# et envoie sous forme JSON
-def chart_data_semaine(request):
-    dht = Dht.objects.all()
-    # calcul de la date de début de la semaine dernière
-    date_debut_semaine = timezone.now().date() - datetime.timedelta(days=7)
-    print(datetime.timedelta(days=7))
-    print(date_debut_semaine)
+@login_required()
+def userupdate(request,id):
 
-    # filtrer les enregistrements créés depuis le début de la semaine dernière
-    dht = Dht.objects.filter(dt__gte=date_debut_semaine)
+    user = get_object_or_404(User,id=id)
 
-    data = {
-        'temps': [Dt.dt for Dt in dht],
-        'temperature': [Temp.temp for Temp in dht],
-        'humidity': [Hum.hum for Hum in dht]
-    }
+    if request.method == 'POST':
+        email = request.POST['email']
+        username = request.POST['username']
+        lastname = request.POST['lastname']
+        firstname = request.POST['firstname']
+        groupname = request.POST['group']
 
-    return JsonResponse(data)
+        if User.objects.filter(email=email).exclude(id=user.id).exists():
+            messages.info(request, 'Email already taken')
+            return redirect('userupdate',id=id)
+        elif User.objects.filter(username=username).exclude(pk=user.pk).exists():
+            messages.info(request, 'Username already taken')
+            return redirect('userupdate', id=id)
 
-#pour récupérer les valeurs de température et humidité de dernier moins
-# et envoie sous forme JSON
-def chart_data_mois(request):
-    dht = Dht.objects.all()
+        user.email = email
+        user.username = username
+        user.first_name = firstname
+        user.last_name = lastname
+        user.save()
 
-    date_debut_semaine = timezone.now().date() - datetime.timedelta(days=30)
-    print(datetime.timedelta(days=30))
-    print(date_debut_semaine)
+        group = Group.objects.get(name=groupname)
+        user.groups.set([group])
 
-    # filtrer les enregistrements créés depuis le début de la semaine dernière
-    dht = Dht.objects.filter(dt__gte=date_debut_semaine)
+        return redirect('userlist')
+    else:
+        groupes = Group.objects.all()
+        context = {'user': user, 'groupes': groupes}
+        return render(request, 'user/user_update.html', context)
+@login_required()
+def userdetele(request,id):
+    user = User.objects.filter(id=id)
+    user.delete()
+    messages.success(request, 'User deleted successfully')
+    return redirect('userlist')
+@login_required()
+def messagelist(request):
+    template = {'EMAIL':TemplateMessage.EMAIL, 'TELEGRAM':TemplateMessage.TELEGRAM, 'WHATSAPP':TemplateMessage.WHATSAPP}
+    context ={'template': template}
+    return render(request,"parametre/message_list.html", context)
+@login_required()
+def messageupdate(request, name):
+    if name == "EMAIL":
+        context = {'key':name,'template': TemplateMessage.EMAIL}
+    if name == "TELEGRAM":
+        context = {'key':name,'template': TemplateMessage.TELEGRAM}
+    if name == "WHATSAPP":
+        context = {'key':name,'template': TemplateMessage.WHATSAPP}
 
-    data = {
-        'temps': [Dt.dt for Dt in dht],
-        'temperature': [Temp.temp for Temp in dht],
-        'humidity': [Hum.hum for Hum in dht]
-    }
-    return JsonResponse(data)
+    if request.method == 'POST':
 
-def sendtele(dht):
+        message = request.POST['message']
+
+        if name == "EMAIL":
+            TemplateMessage.EMAIL = message
+        if name == "TELEGRAM":
+            TemplateMessage.TELEGRAM = message
+        if name == "WHATSAPP":
+            TemplateMessage.WHATSAPP = message
+
+        return redirect('messagelist')
+
+    return render(request,"parametre/message_update.html", context)
+@login_required()
+def normsupdate(request,name):
+    if name == "Température maximale":
+        context = {'key': name, 'template': Norms.MAX_TEMP}
+    if name == "Température miminale":
+        context = {'key': name, 'template': Norms.MIN_TEMP}
+    if name == "Humidité maximale":
+        context = {'key': name, 'template': Norms.MAX_HUM}
+    if name == "Humidité miminale":
+            context = {'key': name, 'template': Norms.MIN_HUM}
+
+    if request.method == 'POST':
+
+        newvalue = request.POST['value']
+
+        if name == "Température maximale":
+            Norms.MAX_TEMP = newvalue
+        if name == "Température miminale":
+            Norms.MIN_TEMP = newvalue
+        if name == "Humidité maximale":
+            Norms.MAX_HUM = newvalue
+        if name == "Humidité miminale":
+            Norms.MIN_HUM = newvalue
+
+        return redirect('home')
+
+    return render(request, "parametre/norms_update.html", context)
+
+def sendtele(message):
     token = '6436101701:AAHdYFMJXV4uFdDYoTqq1jsEhgSV1AogDMI'
     rece_id = 1092321991
     bot = telepot.Bot(token)
-
-    message = f"""
-    🚨 Temperature Alert! 🚨
-
-The current temperature has exceeded the normal threshold.
-
-    🌡️ Temperature: {dht.temp}
-    💧 Humidity: {dht.hum}
-    📅 Date and Time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-
-Anomaly detected in the machine. Immediate attention is required!
-
-#TemperatureAlert #MachineAnomaly
-    """
-
     bot.sendMessage(rece_id, message)
-    print(bot.sendMessage(rece_id, 'OK.'))
 
-def sendwhatsap(dht):
+def sendwhatsap(body):
     account_sid = 'AC3da34e6234a1cbd00d6faaa4aa97bbd7'
     auth_token = '9146f244fc4c4c9fab4286a2a404037a'
     client = Client(account_sid, auth_token)
     message = client.messages.create(
         from_='whatsapp:+14155238886',
-        body=f"""
-        🚨 Alert: High Temp & Humidity 🚨
-Machine Anomaly Detected:
-    🌡️ Temp: {dht.temp}
-    💧 Humidity: {dht.hum}
-    📅 Date & Time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}""",
+        body=body,
         to='whatsapp:+212615503124'
     )
+

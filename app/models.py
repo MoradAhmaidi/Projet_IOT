@@ -1,7 +1,45 @@
 import os
+from enum import Enum
 from django.db import models
 from datetime import datetime
 from django.core.mail import send_mail
+
+class Norms:
+     MIN_TEMP = -2
+     MAX_TEMP = 4
+     MIN_HUM = 30
+     MAX_HUM = 50
+
+class TemplateMessage:
+     EMAIL = '''
+     🚨 Alert: High Temp & Humidity 🚨
+     
+     The current temperature or Humidity has exceeded the normal threshold.
+        Machine Anomaly Detected:
+        🌡️ Temp: {temp}
+        💧 Humidity: {hum}
+        📅 Date and Time: {dt}
+     Anomaly detected in the machine. Immediate attention is required!
+    '''
+     TELEGRAM = '''
+     🚨 Alert: High Temp & Humidity 🚨
+     
+     The current temperature or Humidity has exceeded the normal threshold.
+        Machine Anomaly Detected:
+        🌡️ Temp: {temp}
+        💧 Humidity: {hum}
+        📅 Date and Time: {dt}
+     Anomaly detected in the machine. Immediate attention is required!
+     '''
+     WHATSAPP = '''
+     🚨 Alert: High Temp & Humidity 🚨
+        Machine Anomaly Detected:
+        🌡️ Temp: {temp}
+        💧 Humidity: {hum}
+        📅 Date and Time: {dt}
+      Anomaly detected in the machine. Immediate attention is required!
+     '''
+
 class Dht(models.Model):
      temp = models.FloatField(null=True)
      hum = models.FloatField(null=True)
@@ -11,25 +49,25 @@ class Dht(models.Model):
         return str(self.temp)
 
      def save(self, *args, **kwargs):
-          if self.temp > 20:
-               from app.views import sendtele,sendwhatsap
-               sendtele(self)
-               sendwhatsap(self)
-               send_mail(
-                    "Temperature Alert - Anomaly Detected in the Machine",
-                    f"""
-                    This is an automated alert to inform you that the temperature in the machine has exceeded the normal threshold.
-                         Details:
-                         - Temperature: {self.temp}
-                         - Date and Time: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
-                         
-                    Immediate attention is required to address this anomaly. Please investigate and take necessary actions to prevent any potential issues.
-                         
-                    Thank you for your prompt attention to this matter.
-                         
-                    Best regards,""",
+          if not Norms.MIN_TEMP <= self.temp <= Norms.MAX_TEMP or Norms.MIN_HUM <= self.hum <= Norms.MAX_HUM:
+               from app.views import sendwhatsap,sendtele
+               '''sendwhatsap(body=TemplateMessage.WHATSAPP.format(
+                    temp=self.temp,
+                    hum=self.hum,
+                    dt=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+               ))'''
+               sendtele(message=TemplateMessage.TELEGRAM.format(
+                    temp=self.temp,
+                    hum=self.hum,
+                    dt=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+               ))
+               send_mail("Temperature Alert - Anomaly Detected in the Machine",
+                    TemplateMessage.EMAIL.format(
+                    temp=self.temp,
+                    hum=self.hum,
+                    dt=datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
                     'soptimaze@gmail.com',
                     ['moradahmaidi9@gmail.com'],
                     fail_silently=False,
                )
-               return super().save(*args, **kwargs)
+          return super().save(*args, **kwargs)

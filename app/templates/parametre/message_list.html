@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% load static %}
+
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-12">
+            <h2 class="page-title">Messages</h2>
+            <div class="row">
+                {% for key, value in template.items %}
+                <div class="col-md-6 mb-4">
+                    <div class="card shadow">
+                        <div class="card-header">
+                            <strong class="card-title">{{key}} Template</strong>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">{{value}} .</p>
+                            <div class="mb-2">
+                                <a href="{% url 'messageupdate' name=key %}" class="btn mb-2 btn-primary" > Edite  </a>
+                            </div>
+                        </div> <!-- /. card-body -->
+                    </div> <!-- /. card-body -->
+                </div> <!-- /. col -->
+               {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
