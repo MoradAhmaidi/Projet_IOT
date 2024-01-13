@@ -1,4 +1,5 @@
 import telepot
+from django.db.models import Max, Min
 from twilio.rest import Client
 from django.contrib import messages
 from django.shortcuts import render,redirect
@@ -31,11 +32,14 @@ def logout(request):
 @login_required()
 def home(request):
     data = Dht.objects.all()
+    max_temp = Dht.objects.aggregate(Max('temp'))
+    min_temp = Dht.objects.aggregate(Min('temp'))
+    max_hum = Dht.objects.aggregate(Max('hum'))
+    min_hum = Dht.objects.aggregate(Min('hum'))
     lastData = Dht.objects.all().last()
     template = {'Température maximale': Norms.MAX_TEMP, 'Température miminale': Norms.MIN_TEMP,
                 'Humidité maximale': Norms.MAX_HUM, 'Humidité miminale': Norms.MIN_HUM}
-
-    context = {'data': data, 'lastData': lastData,'template': template}
+    context = {'data': data, 'lastData': lastData,'template': template,"maxTemp":max_temp['temp__max'],"minTemp":min_temp['temp__min'],"maxHum":max_hum['hum__max'],"minHum":min_hum['hum__min']}
     return render(request, 'index.html', context)
 
 @login_required()
@@ -190,4 +194,5 @@ def sendwhatsap(body):
         body=body,
         to='whatsapp:+212615503124'
     )
+
 

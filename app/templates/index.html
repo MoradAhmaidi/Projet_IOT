@@ -9,6 +9,8 @@
                 </div>
                 <div class="col-12">
                     <div class="row">
+                        {% for group in user.groups.all %}
+                        {% if group.name == 'Superviseur' %}
                         {% for key, value in template.items %}
                         <div class="col-md-6 col-xl-3 mb-4">
                             <div class="card shadow">
@@ -26,6 +28,8 @@
                                 </div> <!-- .card-body -->
                             </div> <!-- .card -->
                         </div> <!-- .col -->
+                        {% endfor %}
+                        {% endif %}
                         {% endfor %}
                     </div>
                     <div class="row">
@@ -71,19 +75,19 @@
                         <div class="row mt-1 align-items-center">
                             <div class="col-12 col-lg-3 text-center py-4">
                                 <p class="mb-1 small text-muted">Temperateur Max</p>
-                                <span class="h3">30</span>
+                                <span class="h3">{{maxTemp}}</span>
                             </div>
                             <div class="col-12 col-lg-3 text-center py-4">
                                 <p class="mb-1 small text-muted">Temperateur Min</p>
-                                <span class="h3">24</span><br/>
+                                <span class="h3">{{minTemp}}</span><br/>
                             </div>
                             <div class="col-12 col-lg-3 text-center py-4 ">
                                 <p class="mb-1 small text-muted">Humidite Max</p>
-                                <span class="h3">80</span><br/>
+                                <span class="h3">{{maxHum}}</span><br/>
                             </div>
                             <div class="col-12 col-lg-3 text-center py-4">
                                 <p class="mb-1 small text-muted">Humidite Min</p>
-                                <span class="h3">26</span><br/>
+                                <span class="h3">{{minHum}}</span><br/>
                             </div>
                         </div>
                         <div class="card-body">
@@ -92,228 +96,266 @@
                     </div> <!-- .card-body -->
                 </div> <!-- .card -->
             </div>
+            <div class="justify-content-center">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <div class="card-body">
+                            <!-- table -->
+                            <table class="table datatables" id="dhttable">
+                                <thead>
+                                <tr>
+                                    <th scope="col">id</th>
+                                    <th scope="col">Temperature</th>
+                                    <th scope="col">Humidity</th>
+                                    <th scope="col">Date Time</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for data_entry in data %}
+                                <tr>
+                                    <td>{{ data_entry.id }}</td>
+                                    <td>{{ data_entry.temp }}</td>
+                                    <td>{{ data_entry.hum }}</td>
+                                    <td>{{ data_entry.dt }}</td>
+                                </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div> <!-- /.card-body -->
+                </div> <!-- /.card -->
+            </div>
+        </div>
+    </div> <!-- .row -->
+</div> <!-- .container-fluid -->
 
-        </div> <!-- .row -->
-    </div> <!-- .container-fluid -->
-
-    {% endblock %}
-    {% block script %}
-    <script>
-        var radialbarChart,radialbarOptions=
-        {series:[{{lastData.hum | floatformat:2}}],
-        chart:{height:200,type:"radialBar"},
-        plotOptions:{radialBar:{hollow:{size:"75%"},
-        track:{background:colors.borderColor},
-        dataLabels:{show:!0,name:{fontSize:"0.875rem",fontWeight:400,offsetY:-10,show:!0,color:colors.mutedColor,fontFamily:base.defaultFontFamily},
-        value:{formatter:function(a){return parseInt(a)},color:colors.headingColor,fontSize:"1.53125rem",fontWeight:700,fontFamily:base.defaultFontFamily,offsetY:5,show:!0},
-        total:{show:!0,fontSize:"0.875rem",fontWeight:400,offsetY:-10,label:"Percent",color:colors.mutedColor,fontFamily:base.defaultFontFamily}}}},
-        fill:{type:"gradient",gradient:{shade:"light",type:"diagonal2",shadeIntensity:.2,gradientFromColors:[extend.primaryColorLighter],gradientToColors:[extend.primaryColorDark],inverseColors:!0,opacityFrom:1,opacityTo:1,stops:[20,100]}},
-        stroke:{lineCap:"round"},labels:["CPU"]},radialbar=document.querySelector("#radialbar");radialbar&&(radialbarChart=new ApexCharts(radialbar,radialbarOptions)).render();
-
-         var radialbarChart1,radialbarOptions1=
-        {series:[{{lastData.temp | floatformat:2 }}],
-        chart:{height:200,type:"radialBar"},
-        plotOptions:{radialBar:{hollow:{size:"75%"},
-        track:{background:colors.borderColor},
-        dataLabels:{show:!0,name:{fontSize:"0.875rem",fontWeight:400,offsetY:-10,show:!0,color:colors.mutedColor,fontFamily:base.defaultFontFamily},
-        value:{formatter:function(a){return parseInt(a)},color:colors.headingColor,fontSize:"1.53125rem",fontWeight:700,fontFamily:base.defaultFontFamily,offsetY:5,show:!0},
-        total:{show:!0,fontSize:"0.875rem",fontWeight:400,offsetY:-10,label:"C°",color:colors.mutedColor,fontFamily:base.defaultFontFamily}}}},
-        fill:{type:"gradient",gradient:{shade:"light",type:"diagonal2",shadeIntensity:.2,gradientFromColors:[extend.primaryColorLighter],gradientToColors:[extend.primaryColorDark],inverseColors:!0,opacityFrom:1,opacityTo:1,stops:[20,100]}},
-        stroke:{lineCap:"round"},labels:["CPU"]},radialbar1=document.querySelector("#radialbar1");radialbar1&&(radialbarChart=new ApexCharts(radialbar1,radialbarOptions1)).render();
-
-
-        var columnChart,columnChartoptions=
-        {series:[
-        {name:"Humidite",data:[{% for item in data %}{{item.hum | floatformat:2 }} , {% endfor%}]},
-        {name:"Temperateur",data:[{% for item in data %}{{item.temp | floatformat:2 }} , {% endfor%}]}],
-        chart:{type:"bar",height:350,stacked:!1,columnWidth:"70%",zoom:{enabled:!0},toolbar:{show:!1},background:"transparent"},dataLabels:{enabled:!1},theme:{mode:colors.chartTheme},responsive:[{breakpoint:480,options:{legend:{position:"bottom",offsetX:-10,offsetY:0}}}],plotOptions:{bar:{horizontal:!1,columnWidth:"40%",radius:30,enableShades:!1,endingShape:"rounded"}},xaxis:{type:"datetime",
-        categories:[{% for item in data %} "{{item.dt |date:'Y-m-d\TH:i:s'}}", {% endfor%}],labels:{show:!0,trim:!0,minHeight:void 0,maxHeight:120,style:{colors:colors.mutedColor,cssClass:"text-muted",fontFamily:base.defaultFontFamily}},axisBorder:{show:!1}},yaxis:{labels:{show:!0,trim:!1,offsetX:-10,minHeight:void 0,maxHeight:120,style:{colors:colors.mutedColor,cssClass:"text-muted",fontFamily:base.defaultFontFamily}}},legend:{position:"top",fontFamily:base.defaultFontFamily,fontWeight:400,labels:{colors:colors.mutedColor,useSeriesColors:!1},markers:{width:10,height:10,strokeWidth:0,strokeColor:"#fff",fillColors:[extend.primaryColor,extend.primaryColorLighter],radius:6,customHTML:void 0,onClick:void 0,offsetX:0,offsetY:0},itemMargin:{horizontal:10,vertical:0},onItemClick:{toggleDataSeries:!0},onItemHover:{highlightDataSeries:!0}},fill:{opacity:1,colors:[base.primaryColor,extend.primaryColorLighter]},grid:{show:!0,borderColor:colors.borderColor,strokeDashArray:0,position:"back",xaxis:{lines:{show:!1}},yaxis:{lines:{show:!0}},row:{colors:void 0,opacity:.5},column:{colors:void 0,opacity:.5},padding:{top:0,right:0,bottom:0,left:0}}},columnChartCtn=document.querySelector("#columnChart");columnChartCtn&&(columnChart=new ApexCharts(columnChartCtn,columnChartoptions)).render();
-
-        var lineChart,lineChartoptions=
-        {series:[
-        {name:"Humidite",data:[{% for item in data %}{{item.hum | floatformat:2 }} , {% endfor%}]},
-        {name:"Temperateur",data:[{% for item in data %}{{item.temp | floatformat:2 }} , {% endfor%}]},
-        {name:"",data:[]}],
-        chart:{height:350,type:"line",background:!1,zoom:{enabled:!1},toolbar:{show:!1}},theme:{mode:colors.chartTheme},stroke:{show:!0,curve:"smooth",lineCap:"round",colors:chartColors,width:[3,2,3],dashArray:[0,0,0]},dataLabels:{enabled:!1},responsive:[{breakpoint:480,options:{legend:{position:"bottom",offsetX:-10,offsetY:0}}}],markers:{size:4,colors:base.primaryColor,strokeColors:colors.borderColor,strokeWidth:2,strokeOpacity:.9,strokeDashArray:0,fillOpacity:1,discrete:[],shape:"circle",radius:2,offsetX:0,offsetY:0,onClick:void 0,onDblClick:void 0,showNullDataPoints:!0,hover:{size:void 0,sizeOffset:3}},xaxis:{type:"datetime",
-        categories:[{% for item in data %} "{{item.dt |date:'Y-m-d\TH:i:s'}}", {% endfor%}],labels:{show:!0,trim:!1,minHeight:void 0,maxHeight:120,style:{colors:colors.mutedColor,cssClass:"text-muted",fontFamily:base.defaultFontFamily}},axisBorder:{show:!1}},yaxis:{labels:{show:!0,trim:!1,offsetX:-10,minHeight:void 0,maxHeight:120,style:{colors:colors.mutedColor,cssClass:"text-muted",fontFamily:base.defaultFontFamily}}},legend:{position:"top",fontFamily:base.defaultFontFamily,fontWeight:400,labels:{colors:colors.mutedColor,useSeriesColors:!1},markers:{width:10,height:10,strokeWidth:0,strokeColor:colors.borderColor,fillColors:chartColors,radius:6,customHTML:void 0,onClick:void 0,offsetX:0,offsetY:0},itemMargin:{horizontal:10,vertical:0},onItemClick:{toggleDataSeries:!0},onItemHover:{highlightDataSeries:!0}},grid:{show:!0,borderColor:colors.borderColor,strokeDashArray:0,position:"back",xaxis:{lines:{show:!1}},yaxis:{lines:{show:!0}},row:{colors:void 0,opacity:.5},column:{colors:void 0,opacity:.5},padding:{top:0,right:0,bottom:0,left:0}}},lineChartCtn=document.querySelector("#lineChart");lineChartCtn&&(lineChart=new ApexCharts(lineChartCtn,lineChartoptions)).render();
-      $('.select2').select2(
+{% endblock %}
+{% block script %}
+<script>
+    $('#dhttable').DataTable(
       {
-        theme: 'bootstrap4',
+        autoWidth: true,
+        "lengthMenu": [
+          [16, 32, 64, -1],
+          [16, 32, 64, "All"]
+        ]
       });
-      $('.select2-multi').select2(
+    var radialbarChart,radialbarOptions=
+    {series:[{{lastData.hum | floatformat:2}}],
+    chart:{height:200,type:"radialBar"},
+    plotOptions:{radialBar:{hollow:{size:"75%"},
+    track:{background:colors.borderColor},
+    dataLabels:{show:!0,name:{fontSize:"0.875rem",fontWeight:400,offsetY:-10,show:!0,color:colors.mutedColor,fontFamily:base.defaultFontFamily},
+    value:{formatter:function(a){return parseInt(a)},color:colors.headingColor,fontSize:"1.53125rem",fontWeight:700,fontFamily:base.defaultFontFamily,offsetY:5,show:!0},
+    total:{show:!0,fontSize:"0.875rem",fontWeight:400,offsetY:-10,label:"Percent",color:colors.mutedColor,fontFamily:base.defaultFontFamily}}}},
+    fill:{type:"gradient",gradient:{shade:"light",type:"diagonal2",shadeIntensity:.2,gradientFromColors:[extend.primaryColorLighter],gradientToColors:[extend.primaryColorDark],inverseColors:!0,opacityFrom:1,opacityTo:1,stops:[20,100]}},
+    stroke:{lineCap:"round"},labels:["CPU"]},radialbar=document.querySelector("#radialbar");radialbar&&(radialbarChart=new ApexCharts(radialbar,radialbarOptions)).render();
+
+     var radialbarChart1,radialbarOptions1=
+    {series:[{{lastData.temp | floatformat:2 }}],
+    chart:{height:200,type:"radialBar"},
+    plotOptions:{radialBar:{hollow:{size:"75%"},
+    track:{background:colors.borderColor},
+    dataLabels:{show:!0,name:{fontSize:"0.875rem",fontWeight:400,offsetY:-10,show:!0,color:colors.mutedColor,fontFamily:base.defaultFontFamily},
+    value:{formatter:function(a){return parseInt(a)},color:colors.headingColor,fontSize:"1.53125rem",fontWeight:700,fontFamily:base.defaultFontFamily,offsetY:5,show:!0},
+    total:{show:!0,fontSize:"0.875rem",fontWeight:400,offsetY:-10,label:"C°",color:colors.mutedColor,fontFamily:base.defaultFontFamily}}}},
+    fill:{type:"gradient",gradient:{shade:"light",type:"diagonal2",shadeIntensity:.2,gradientFromColors:[extend.primaryColorLighter],gradientToColors:[extend.primaryColorDark],inverseColors:!0,opacityFrom:1,opacityTo:1,stops:[20,100]}},
+    stroke:{lineCap:"round"},labels:["CPU"]},radialbar1=document.querySelector("#radialbar1");radialbar1&&(radialbarChart=new ApexCharts(radialbar1,radialbarOptions1)).render();
+
+
+    var columnChart,columnChartoptions=
+    {series:[
+    {name:"Humidite",data:[{% for item in data %}{{item.hum | floatformat:2 }} , {% endfor%}]},
+    {name:"Temperateur",data:[{% for item in data %}{{item.temp | floatformat:2 }} , {% endfor%}]}],
+    chart:{type:"bar",height:350,stacked:!1,columnWidth:"70%",zoom:{enabled:!0},toolbar:{show:!1},background:"transparent"},dataLabels:{enabled:!1},theme:{mode:colors.chartTheme},responsive:[{breakpoint:480,options:{legend:{position:"bottom",offsetX:-10,offsetY:0}}}],plotOptions:{bar:{horizontal:!1,columnWidth:"40%",radius:30,enableShades:!1,endingShape:"rounded"}},xaxis:{type:"datetime",
+    categories:[{% for item in data %} "{{item.dt |date:'Y-m-d\TH:i:s'}}", {% endfor%}],labels:{show:!0,trim:!0,minHeight:void 0,maxHeight:120,style:{colors:colors.mutedColor,cssClass:"text-muted",fontFamily:base.defaultFontFamily}},axisBorder:{show:!1}},yaxis:{labels:{show:!0,trim:!1,offsetX:-10,minHeight:void 0,maxHeight:120,style:{colors:colors.mutedColor,cssClass:"text-muted",fontFamily:base.defaultFontFamily}}},legend:{position:"top",fontFamily:base.defaultFontFamily,fontWeight:400,labels:{colors:colors.mutedColor,useSeriesColors:!1},markers:{width:10,height:10,strokeWidth:0,strokeColor:"#fff",fillColors:[extend.primaryColor,extend.primaryColorLighter],radius:6,customHTML:void 0,onClick:void 0,offsetX:0,offsetY:0},itemMargin:{horizontal:10,vertical:0},onItemClick:{toggleDataSeries:!0},onItemHover:{highlightDataSeries:!0}},fill:{opacity:1,colors:[base.primaryColor,extend.primaryColorLighter]},grid:{show:!0,borderColor:colors.borderColor,strokeDashArray:0,position:"back",xaxis:{lines:{show:!1}},yaxis:{lines:{show:!0}},row:{colors:void 0,opacity:.5},column:{colors:void 0,opacity:.5},padding:{top:0,right:0,bottom:0,left:0}}},columnChartCtn=document.querySelector("#columnChart");columnChartCtn&&(columnChart=new ApexCharts(columnChartCtn,columnChartoptions)).render();
+
+    var lineChart,lineChartoptions=
+    {series:[
+    {name:"Humidite",data:[{% for item in data %}{{item.hum | floatformat:2 }} , {% endfor%}]},
+    {name:"Temperateur",data:[{% for item in data %}{{item.temp | floatformat:2 }} , {% endfor%}]},
+    {name:"",data:[]}],
+    chart:{height:350,type:"line",background:!1,zoom:{enabled:!1},toolbar:{show:!1}},theme:{mode:colors.chartTheme},stroke:{show:!0,curve:"smooth",lineCap:"round",colors:chartColors,width:[3,2,3],dashArray:[0,0,0]},dataLabels:{enabled:!1},responsive:[{breakpoint:480,options:{legend:{position:"bottom",offsetX:-10,offsetY:0}}}],markers:{size:4,colors:base.primaryColor,strokeColors:colors.borderColor,strokeWidth:2,strokeOpacity:.9,strokeDashArray:0,fillOpacity:1,discrete:[],shape:"circle",radius:2,offsetX:0,offsetY:0,onClick:void 0,onDblClick:void 0,showNullDataPoints:!0,hover:{size:void 0,sizeOffset:3}},xaxis:{type:"datetime",
+    categories:[{% for item in data %} "{{item.dt |date:'Y-m-d\TH:i:s'}}", {% endfor%}],labels:{show:!0,trim:!1,minHeight:void 0,maxHeight:120,style:{colors:colors.mutedColor,cssClass:"text-muted",fontFamily:base.defaultFontFamily}},axisBorder:{show:!1}},yaxis:{labels:{show:!0,trim:!1,offsetX:-10,minHeight:void 0,maxHeight:120,style:{colors:colors.mutedColor,cssClass:"text-muted",fontFamily:base.defaultFontFamily}}},legend:{position:"top",fontFamily:base.defaultFontFamily,fontWeight:400,labels:{colors:colors.mutedColor,useSeriesColors:!1},markers:{width:10,height:10,strokeWidth:0,strokeColor:colors.borderColor,fillColors:chartColors,radius:6,customHTML:void 0,onClick:void 0,offsetX:0,offsetY:0},itemMargin:{horizontal:10,vertical:0},onItemClick:{toggleDataSeries:!0},onItemHover:{highlightDataSeries:!0}},grid:{show:!0,borderColor:colors.borderColor,strokeDashArray:0,position:"back",xaxis:{lines:{show:!1}},yaxis:{lines:{show:!0}},row:{colors:void 0,opacity:.5},column:{colors:void 0,opacity:.5},padding:{top:0,right:0,bottom:0,left:0}}},lineChartCtn=document.querySelector("#lineChart");lineChartCtn&&(lineChart=new ApexCharts(lineChartCtn,lineChartoptions)).render();
+  $('.select2').select2(
+  {
+    theme: 'bootstrap4',
+  });
+  $('.select2-multi').select2(
+  {
+    multiple: true,
+    theme: 'bootstrap4',
+  });
+  $('.drgpicker').daterangepicker(
+  {
+    singleDatePicker: true,
+    timePicker: false,
+    showDropdowns: true,
+    locale:
+    {
+      format: 'MM/DD/YYYY'
+    }
+  });
+  $('.time-input').timepicker(
+  {
+    'scrollDefault': 'now',
+    'zindex': '9999' /* fix modal open */
+  });
+  /** date range picker */
+  if ($('.datetimes').length)
+  {
+    $('.datetimes').daterangepicker(
+    {
+      timePicker: true,
+      startDate: moment().startOf('hour'),
+      endDate: moment().startOf('hour').add(32, 'hour'),
+      locale:
       {
-        multiple: true,
-        theme: 'bootstrap4',
-      });
-      $('.drgpicker').daterangepicker(
+        format: 'M/DD hh:mm A'
+      }
+    });
+  }
+  var start = moment().subtract(29, 'days');
+  var end = moment();
+
+  function cb(start, end)
+  {
+    $('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
+  }
+  $('#reportrange').daterangepicker(
+  {
+    startDate: start,
+    endDate: end,
+    ranges:
+    {
+      'Today': [moment(), moment()],
+      'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+      'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+      'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+      'This Month': [moment().startOf('month'), moment().endOf('month')],
+      'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+    }
+  }, cb);
+  cb(start, end);
+  $('.input-placeholder').mask("00/00/0000",
+  {
+    placeholder: "__/__/____"
+  });
+  $('.input-zip').mask('00000-000',
+  {
+    placeholder: "____-___"
+  });
+  $('.input-money').mask("#.##0,00",
+  {
+    reverse: true
+  });
+  $('.input-phoneus').mask('(000) 000-0000');
+  $('.input-mixed').mask('AAA 000-S0S');
+  $('.input-ip').mask('0ZZ.0ZZ.0ZZ.0ZZ',
+  {
+    translation:
+    {
+      'Z':
       {
-        singleDatePicker: true,
-        timePicker: false,
-        showDropdowns: true,
-        locale:
+        pattern: /[0-9]/,
+        optional: true
+      }
+    },
+    placeholder: "___.___.___.___"
+  });
+  // editor
+  var editor = document.getElementById('editor');
+  if (editor)
+  {
+    var toolbarOptions = [
+      [
+      {
+        'font': []
+      }],
+      [
+      {
+        'header': [1, 2, 3, 4, 5, 6, false]
+      }],
+      ['bold', 'italic', 'underline', 'strike'],
+      ['blockquote', 'code-block'],
+      [
+      {
+        'header': 1
+      },
+      {
+        'header': 2
+      }],
+      [
+      {
+        'list': 'ordered'
+      },
+      {
+        'list': 'bullet'
+      }],
+      [
+      {
+        'script': 'sub'
+      },
+      {
+        'script': 'super'
+      }],
+      [
+      {
+        'indent': '-1'
+      },
+      {
+        'indent': '+1'
+      }], // outdent/indent
+      [
+      {
+        'direction': 'rtl'
+      }], // text direction
+      [
+      {
+        'color': []
+      },
+      {
+        'background': []
+      }], // dropdown with defaults from theme
+      [
+      {
+        'align': []
+      }],
+      ['clean'] // remove formatting button
+    ];
+    var quill = new Quill(editor,
+    {
+      modules:
+      {
+        toolbar: toolbarOptions
+      },
+      theme: 'snow'
+    });
+  }
+
+  // Example starter JavaScript for disabling form submissions if there are invalid fields
+  (function()
+  {
+    'use strict';
+    window.addEventListener('load', function()
+    {
+      // Fetch all the forms we want to apply custom Bootstrap validation styles to
+      var forms = document.getElementsByClassName('needs-validation');
+      // Loop over them and prevent submission
+      var validation = Array.prototype.filter.call(forms, function(form)
+      {
+        form.addEventListener('submit', function(event)
         {
-          format: 'MM/DD/YYYY'
-        }
-      });
-      $('.time-input').timepicker(
-      {
-        'scrollDefault': 'now',
-        'zindex': '9999' /* fix modal open */
-      });
-      /** date range picker */
-      if ($('.datetimes').length)
-      {
-        $('.datetimes').daterangepicker(
-        {
-          timePicker: true,
-          startDate: moment().startOf('hour'),
-          endDate: moment().startOf('hour').add(32, 'hour'),
-          locale:
+          if (form.checkValidity() === false)
           {
-            format: 'M/DD hh:mm A'
+            event.preventDefault();
+            event.stopPropagation();
           }
-        });
-      }
-      var start = moment().subtract(29, 'days');
-      var end = moment();
-
-      function cb(start, end)
-      {
-        $('#reportrange span').html(start.format('MMMM D, YYYY') + ' - ' + end.format('MMMM D, YYYY'));
-      }
-      $('#reportrange').daterangepicker(
-      {
-        startDate: start,
-        endDate: end,
-        ranges:
-        {
-          'Today': [moment(), moment()],
-          'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-          'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-          'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-          'This Month': [moment().startOf('month'), moment().endOf('month')],
-          'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-        }
-      }, cb);
-      cb(start, end);
-      $('.input-placeholder').mask("00/00/0000",
-      {
-        placeholder: "__/__/____"
-      });
-      $('.input-zip').mask('00000-000',
-      {
-        placeholder: "____-___"
-      });
-      $('.input-money').mask("#.##0,00",
-      {
-        reverse: true
-      });
-      $('.input-phoneus').mask('(000) 000-0000');
-      $('.input-mixed').mask('AAA 000-S0S');
-      $('.input-ip').mask('0ZZ.0ZZ.0ZZ.0ZZ',
-      {
-        translation:
-        {
-          'Z':
-          {
-            pattern: /[0-9]/,
-            optional: true
-          }
-        },
-        placeholder: "___.___.___.___"
-      });
-      // editor
-      var editor = document.getElementById('editor');
-      if (editor)
-      {
-        var toolbarOptions = [
-          [
-          {
-            'font': []
-          }],
-          [
-          {
-            'header': [1, 2, 3, 4, 5, 6, false]
-          }],
-          ['bold', 'italic', 'underline', 'strike'],
-          ['blockquote', 'code-block'],
-          [
-          {
-            'header': 1
-          },
-          {
-            'header': 2
-          }],
-          [
-          {
-            'list': 'ordered'
-          },
-          {
-            'list': 'bullet'
-          }],
-          [
-          {
-            'script': 'sub'
-          },
-          {
-            'script': 'super'
-          }],
-          [
-          {
-            'indent': '-1'
-          },
-          {
-            'indent': '+1'
-          }], // outdent/indent
-          [
-          {
-            'direction': 'rtl'
-          }], // text direction
-          [
-          {
-            'color': []
-          },
-          {
-            'background': []
-          }], // dropdown with defaults from theme
-          [
-          {
-            'align': []
-          }],
-          ['clean'] // remove formatting button
-        ];
-        var quill = new Quill(editor,
-        {
-          modules:
-          {
-            toolbar: toolbarOptions
-          },
-          theme: 'snow'
-        });
-      }
-
-      // Example starter JavaScript for disabling form submissions if there are invalid fields
-      (function()
-      {
-        'use strict';
-        window.addEventListener('load', function()
-        {
-          // Fetch all the forms we want to apply custom Bootstrap validation styles to
-          var forms = document.getElementsByClassName('needs-validation');
-          // Loop over them and prevent submission
-          var validation = Array.prototype.filter.call(forms, function(form)
-          {
-            form.addEventListener('submit', function(event)
-            {
-              if (form.checkValidity() === false)
-              {
-                event.preventDefault();
-                event.stopPropagation();
-              }
-              form.classList.add('was-validated');
-            }, false);
-          });
+          form.classList.add('was-validated');
         }, false);
-      })();
-    </script>
-    {% endblock script %}
+      });
+    }, false);
+  })();
+</script>
+
+{% endblock script %}
