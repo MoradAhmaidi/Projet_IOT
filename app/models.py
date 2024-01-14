@@ -1,7 +1,9 @@
 from django.db import models
 from datetime import datetime
 from django.core.mail import send_mail
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
+
+
 class Norms:
      MIN_TEMP = -2
      MAX_TEMP = 4
@@ -48,21 +50,22 @@ class Dht(models.Model):
         return str(self.temp)
 
      def save(self, *args, **kwargs):
+          users = User.objects.all()
           if not Norms.MIN_TEMP <= self.temp <= Norms.MAX_TEMP or Norms.MIN_HUM <= self.hum <= Norms.MAX_HUM:
                self.CPT+=1
-               if self.CPT > 3 :
+               if self.CPT > 3:
                     from app.views import sendwhatsap,sendtele
                     '''sendwhatsap(body=TemplateMessage.WHATSAPP.format(
                          temp=self.temp,
                          hum=self.hum,
                          dt=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     ))'''
-                    sendtele(message=TemplateMessage.TELEGRAM.format(
-                         temp=self.temp,
-                         hum=self.hum,
-                         dt=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    ))
-
+               from app.views import sendtele
+               sendtele(message=TemplateMessage.TELEGRAM.format(
+                    temp=self.temp,
+                    hum=self.hum,
+                    dt=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+               ))
                send_mail("Temperature Alert - Anomaly Detected in the Machine",
                     TemplateMessage.EMAIL.format(
                     temp=self.temp,
