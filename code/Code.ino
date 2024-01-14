@@ -4,9 +4,9 @@
 #include <ArduinoJson.h>
 
 #define DHTTYPE DHT11
-const char* ssid = "ET@eheio";
-const char* password = "eheio2023";
-const char* serverName = "http://10.9.9.8:8000/api"; // mettre l'adresse local de votre machine ou bien de pythonanywhere
+const char* ssid = "PrivateFly";
+const char* password = "wlan471b8f";
+const char* serverName = "http://192.168.1.6:8000/api"; // mettre l'adresse local de votre machine ou bien de pythonanywhere
 //const char* serverName = "http://monitoringtemperatureandhumi.pythonanywhere.com/api/temperaturehumidity";
 #define dht_dpin 4 // nous vons choisi le PIN4 
 DHT dht(dht_dpin, DHTTYPE);
@@ -59,5 +59,5 @@ void loop() {
   http.end();
 
   // Attente de 10 secondes avant de lire les valeurs suivantes
-  delay(10000);
+  delay(1000);
 }

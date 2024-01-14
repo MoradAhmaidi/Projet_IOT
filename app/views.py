@@ -194,5 +194,3 @@ def sendwhatsap(body):
         body=body,
         to='whatsapp:+212615503124'
     )
-
-

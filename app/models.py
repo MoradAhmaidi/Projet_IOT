@@ -44,22 +44,18 @@ class Dht(models.Model):
      temp = models.FloatField(null=True)
      hum = models.FloatField(null=True)
      dt = models.DateTimeField(auto_now_add=True,null=False)
-     CPT=0
 
      def __str__(self):
         return str(self.temp)
 
      def save(self, *args, **kwargs):
-          users = User.objects.all()
           if not Norms.MIN_TEMP <= self.temp <= Norms.MAX_TEMP or Norms.MIN_HUM <= self.hum <= Norms.MAX_HUM:
-               self.CPT+=1
-               if self.CPT > 3:
-                    from app.views import sendwhatsap,sendtele
-                    '''sendwhatsap(body=TemplateMessage.WHATSAPP.format(
-                         temp=self.temp,
-                         hum=self.hum,
-                         dt=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    ))'''
+               from app.views import sendwhatsap
+               '''sendwhatsap(body=TemplateMessage.WHATSAPP.format(
+                    temp=self.temp,
+                    hum=self.hum,
+                    dt=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+               ))'''
                from app.views import sendtele
                sendtele(message=TemplateMessage.TELEGRAM.format(
                     temp=self.temp,
